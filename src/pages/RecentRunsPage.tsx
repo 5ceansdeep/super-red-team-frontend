@@ -22,10 +22,11 @@ async function latestScoredReport(ids: string[]) {
   return fallback
 }
 
-async function loadDashboard() {
+async function loadRuns() {
+  if (!isMock) return (await api.fetchExecutions()).map((execution): { id: string; execution: Execution | null } => ({ id: execution.execution_id, execution }))
   const ids = [...new Set([...loadRecentRuns(), ...demoExecutionIds])]
   const results = await Promise.allSettled(ids.map((id) => api.fetchStatus(id)))
-  const runs = results.flatMap((result, i): { id: string; execution: Execution | null }[] => {
+  return results.flatMap((result, i): { id: string; execution: Execution | null }[] => {
     if (result.status === 'fulfilled') return [{ id: ids[i], execution: result.value }]
     // 서버에 없는 ID는 지우고, 그 외 오류는 조회 실패로 남긴다.
     if (result.reason instanceof ApiError && result.reason.status === 404) {
@@ -34,15 +35,20 @@ async function loadDashboard() {
     }
     return [{ id: ids[i], execution: null }]
   })
+}
+
+async function loadDashboard() {
+  const runs = await loadRuns()
   return { runs, report: await latestScoredReport(runs.filter((r) => cleanRun(r.execution)).map((r) => r.id)) }
 }
 
 export default function RecentRunsPage() {
-  const { data, error } = usePoll(loadDashboard, [])
+  // 진행 중인 실행이 있을 때만 다시 읽어 백엔드 부하를 줄인다.
+  const { data, error } = usePoll(loadDashboard, [], ({ runs }) => !runs.some((r) => r.execution && isActive(r.execution.status)))
   const runs = data?.runs ?? []
   const executions = runs.map((r) => r.execution)
   const kpis = [
-    { icon: 'layers', label: '전체 실행', value: runs.length, hint: '이 브라우저 기준' },
+    { icon: 'layers', label: '전체 실행', value: runs.length, hint: isMock ? '이 브라우저 기준' : '서버 기준' },
     { icon: 'pulse', label: '실행 중', value: executions.filter((e) => e && isActive(e.status)).length, hint: '실시간 갱신' },
     { icon: 'check', label: '정상 완료', value: executions.filter(cleanRun).length, hint: '모든 AI 완주' },
     { icon: 'alert', label: '확인 필요', value: executions.filter(troubled).length, hint: '실패 또는 일부 실패' },

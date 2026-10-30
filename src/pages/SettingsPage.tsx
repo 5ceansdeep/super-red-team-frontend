@@ -10,7 +10,7 @@ import { usePoll } from '../usePoll.ts'
 const AGENT_COUNT = 3
 // TODO: 역할·프롬프트 버전 목록을 제공할 API가 계약에 없다. 백엔드와 값 확정 필요.
 const ROLES = ['범용 탐색·검증', '접근 제어 특화']
-const PROMPT_VERSIONS = ['independent-v1', 'checklist-v1']
+const PROMPT_VERSIONS = ['v1']
 
 const PLANNED = ['Black-box', 'White-box', '브라우저 도구', '코드 읽기 도구', '예약 실행']
 

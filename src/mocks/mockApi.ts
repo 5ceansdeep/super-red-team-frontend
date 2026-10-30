@@ -349,6 +349,7 @@ export async function fetchHealth() { await delay(); return { status: 'ok' } }
 export async function fetchModels() { await delay(); return MODELS }
 export async function fetchScenarios() { await delay(); return SCENARIOS }
 export async function fetchStatus(id: string) { await delay(); return snapshot(findRun(id), Date.now()) }
+export async function fetchExecutions() { await delay(); return runs.map((run) => snapshot(run, Date.now())) }
 export async function fetchLogs(id: string) { await delay(); return logsOf(findRun(id), Date.now()) }
 export async function fetchReport(id: string) { await delay(); return reportOf(findRun(id), Date.now()) }
 

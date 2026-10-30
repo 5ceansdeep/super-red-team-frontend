@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, isMock } from './api/index.ts'
+import ApiConnection from './components/ApiConnection.tsx'
 import Icon from './components/Icon.tsx'
 import { Tag } from './components/StatusBadge.tsx'
 import GuidePage from './pages/GuidePage.tsx'
@@ -53,10 +54,11 @@ export default function App() {
       </aside>
       <div className="main">
         <header className="topbar">
-          <Tag label={isMock ? '시연 데이터' : 'LIVE API'} tone={isMock ? '' : 'green'} />
+          <Tag label={isMock ? '시연 데이터' : '백엔드 연동'} tone={isMock ? '' : 'green'} />
           <span className="team"><span className="avatar">SR</span>Super Red Team</span>
         </header>
         <main className="content">
+          {!isMock && <ApiConnection />}
           {route === '/guide' ? <GuidePage />
             : route === '/new' ? <SettingsPage />
             : id && match?.[2] ? <ReportPage key={id} id={id} />

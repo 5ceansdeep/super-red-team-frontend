@@ -67,7 +67,7 @@ export default function ReportPage({ id }: { id: string }) {
 
       {report.partial && (
         <p className="notice warn" role="alert">
-          일부 AI가 끝까지 실행되지 않아 결과가 일부만 포함되어 있습니다.
+          점검이 완료되지 않았거나 판정이 보류된 항목이 있습니다. 상세 기록과 점검 항목을 확인하세요.
         </p>
       )}
 

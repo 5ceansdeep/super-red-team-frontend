@@ -14,5 +14,5 @@ export function RunBadge({ status, agents }: { status: RunStatus; agents?: Agent
 // 시연 데이터는 상단 표시가 모든 화면에서 알려 준다. 서버가 is_mock을 주지 않으면 실제로 단정하지 않는다.
 export function SourceBadge({ isMock }: { isMock?: boolean }) {
   if (isMock === undefined) return <Tag label="출처 미확인" tone="orange" />
-  return isMock ? null : <Tag label="실측 결과" tone="green" />
+  return isMock ? <Tag label="고정 순서 점검" /> : <Tag label="실제 모델 실행" tone="green" />
 }

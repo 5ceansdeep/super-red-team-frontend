@@ -24,7 +24,7 @@ export default function RankingSection({ combinations }: { combinations: Combina
           <div className="recscore"><strong>{score(top)}</strong><span>조합 점수</span></div>
         </div>
       ) : (
-        <p className="notice">재현된 취약점 점수가 없어 1위를 선정하지 않았습니다.</p>
+        <p className="notice">{ranked.some((c) => c.score === 0) ? '재현된 취약점 점수가 없어 1위를 선정하지 않았습니다.' : 'CVSS 값이 없어 조합 점수를 계산할 수 없습니다. 재현 결과는 다른 탭에서 확인할 수 있습니다.'}</p>
       )}
       {ranked.length === 0 ? <p className="notice">보고서에 조합 점수가 없습니다.</p> : (
         <div className="card tablewrap gap">
