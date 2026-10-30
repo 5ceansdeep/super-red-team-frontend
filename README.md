@@ -96,3 +96,14 @@ src/recentRuns.ts     이 브라우저에서 시작한 실행 ID 저장
 ## Vercel 배포
 
 Vite로 자동 감지된다(빌드 `npm run build`, 출력 `dist`). 해시 라우팅이라 rewrite 설정이 필요 없다.
+## 대상 사이트 URL 입력
+
+백엔드 연동 모드의 실행 설정에서 `점검 대상 사이트 URL`을 입력합니다. 백엔드 API 주소와는 별도이며, 등록된 VM A·B·패치 사이트만 사용할 수 있습니다.
+
+- A: `https://homeserver.tail72d30b.ts.net:10000/lab/a/`
+- B: `https://homeserver.tail72d30b.ts.net:10000/lab/b/`
+- 패치: `https://homeserver.tail72d30b.ts.net:10000/lab/patched/`
+
+서버가 제공하는 대상 목록에서 선택해도 됩니다. 패치 주소를 입력하면 수정 환경으로 전환합니다. 요청은 `target_url`로 전달하며, 대상 ID와 실제 환경은 서버가 확정합니다. 미등록 주소를 입력하면 서버의 거부 이유를 표시합니다.
+
+백엔드에도 `target_url` 지원과 세 대상의 등록이 필요합니다. 운영 API 주소는 `VITE_API_BASE_URL=https://homeserver.tail72d30b.ts.net:10000`, 연결 모드는 `VITE_USE_MOCK=false`로 설정합니다. `VITE_EXECUTION_MODE=mock`는 모델 호출만 대체하며 실제 VM에 HTTP 요청을 보냅니다. 접근 토큰은 코드에 고정하지 않습니다.

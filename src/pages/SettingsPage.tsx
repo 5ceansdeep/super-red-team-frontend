@@ -14,17 +14,25 @@ const PROMPT_VERSIONS = ['v1']
 
 const PLANNED = ['Black-box', 'White-box', '브라우저 도구', '코드 읽기 도구', '예약 실행']
 
+const siteUrl = (value: string) => {
+  try { return new URL(value.trim()).href.replace(/\/+$/, '') }
+  catch { return value.trim() }
+}
+
 export default function SettingsPage() {
   const { data: models, error: modelsError } = usePoll(api.fetchModels, [], () => true)
   const { data: scenarios, error: scenariosError } = usePoll(api.fetchScenarios, [], () => true)
   const [scenarioId, setScenarioId] = useState('')
+  const [targetUrl, setTargetUrl] = useState('')
   const [agents, setAgents] = useState<AgentInput[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string>()
 
   useEffect(() => {
     if (!models || !scenarios) return
-    setScenarioId(scenarios[0]?.id ?? '')
+    const first = scenarios.find((s) => s.service === 'web') ?? scenarios[0]
+    setScenarioId(first?.id ?? '')
+    setTargetUrl(first?.target_url ?? '')
     setAgents(models.slice(0, AGENT_COUNT).map((m) => ({ model_id: m.id, role: ROLES[0], prompt_version: PROMPT_VERSIONS[0] })))
   }, [models, scenarios])
 
@@ -43,7 +51,8 @@ export default function SettingsPage() {
     setSubmitting(true)
     setSubmitError(undefined)
     try {
-      const { execution_id } = await api.startRun({ scenario_id: scenario.id, collaboration_mode: 'independent', agents })
+      const { execution_id } = await api.startRun({ scenario_id: scenario.id, collaboration_mode: 'independent', agents,
+        ...(scenario.service === 'web' ? { target_url: targetUrl } : {}) })
       rememberRun(execution_id)
       location.hash = `/executions/${execution_id}`
     } catch (err) {
@@ -57,7 +66,7 @@ export default function SettingsPage() {
       <div className="heading">
         <div>
           <h1>실행 설정</h1>
-          <p className="subtitle">사전 등록된 환경만 선택할 수 있습니다. 세 AI는 서로의 결과를 보지 않고 각자 점검합니다.</p>
+          <p className="subtitle">점검할 사이트 주소를 입력하세요. 세 AI는 같은 사이트를 서로의 결과를 보지 않고 각자 점검합니다.</p>
         </div>
         <button className="primary" disabled={agents.length !== AGENT_COUNT || submitting}>{submitting ? '시작 중…' : '점검 시작'}</button>
       </div>
@@ -68,11 +77,31 @@ export default function SettingsPage() {
           <section className="card pad">
             <h2>시나리오</h2>
             <label className="field">시나리오·환경
-              <select value={scenario.id} onChange={(e) => setScenarioId(e.target.value)}>
+              <select value={scenario.id} onChange={(e) => {
+                setScenarioId(e.target.value)
+                setTargetUrl(scenarios.find((s) => s.id === e.target.value)?.target_url ?? '')
+                setSubmitError(undefined)
+              }}>
                 {scenarios.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.environment}</option>)}
               </select>
             </label>
             <p className="subtitle">{scenario.description}</p>
+            {scenario.service === 'web' && <>
+              <label className="field">점검 대상 사이트 URL
+                <input type="url" name="target_url" required list="target-sites" value={targetUrl}
+                  placeholder="https://사이트주소/" onChange={(e) => {
+                    const value = e.target.value
+                    setTargetUrl(value)
+                    setSubmitError(undefined)
+                    const match = scenarios.find((s) => s.target_urls?.some((url) => siteUrl(url) === siteUrl(value)))
+                    if (match) setScenarioId(match.id)
+                  }} />
+              </label>
+              <datalist id="target-sites">
+                {scenarios.filter((s) => s.target_url).map((s) => <option key={s.id} value={s.target_url}>{s.name}</option>)}
+              </datalist>
+              <p className="muted tiny">VM A·B·패치 사이트 주소를 입력하거나 목록에서 선택하세요. 등록된 세 사이트만 점검할 수 있습니다.</p>
+            </>}
           </section>
 
           <section className="card pad">
@@ -104,6 +133,7 @@ export default function SettingsPage() {
           <div className="configlist">
             <div className="configrow"><span>실행 방식</span><b>독립 실행</b></div>
             <div className="configrow"><span>환경</span><b>{scenario.environment} · {scenario.version}</b></div>
+            {scenario.service === 'web' && <div className="configrow"><span>대상 사이트</span><b>{targetUrl || '주소를 입력하세요'}</b></div>}
             <div className="configrow"><span>테스트 계정</span><b>{scenario.actors.join(' / ')}</b></div>
             <div className="configrow"><span>제공 정보</span><b>일부 제공 (Gray-box)</b></div>
             <div className="configrow"><span>점검 분야</span><b>접근 제어</b></div>

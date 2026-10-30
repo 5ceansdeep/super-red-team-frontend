@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node --test src/mocks/mockApi.test.ts"
+    "test": "node --test src/mocks/mockApi.test.ts src/api/http.test.ts"
   },
   "dependencies": {
     "react": "^19.3.1",
