@@ -54,7 +54,6 @@ export default function App() {
       </aside>
       <div className="main">
         <header className="topbar">
-          <Tag label={isMock ? '시연 데이터' : '백엔드 연동'} tone={isMock ? '' : 'green'} />
           <span className="team"><span className="avatar">SR</span>Super Red Team</span>
         </header>
         <main className="content">
