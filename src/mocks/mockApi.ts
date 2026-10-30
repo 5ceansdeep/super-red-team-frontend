@@ -6,7 +6,7 @@ import type {
   StartRunRequest, TestAttempt,
 } from '../api/types.ts'
 import {
-  CHECKS, FINDINGS, GROUND_TRUTH, METHODS, MODELS, OTHER_COMBINATIONS, SCENARIO_ENV, SCENARIOS, TIMELINES, TOTALS,
+  CHECKS, FINDINGS, GROUND_TRUTH, METHODS, MODELS, SCENARIO_ENV, SCENARIOS, TIMELINES, TOTALS,
 } from './fixtures.ts'
 import type { Step } from './fixtures.ts'
 
@@ -182,31 +182,25 @@ export function logsOf(run: Run, now: number): LogEntry[] {
 const score = (contributions: [number, number][]) => round2(contributions.reduce((sum, [cvss, rate]) => sum + cvss * rate, 0))
 const modelName = (id: string) => MODELS.find((m) => m.id === id)!.name
 
-function combinationsOf(run: Run, findings: Finding[], failedAll: boolean): Combination[] {
+// 같은 실행의 모델 부분 집합을 조합으로 본다. 3모델이면 7개다.
+function combinationsOf(run: Run, visible: ReturnType<typeof visibleAttempts>, failedAll: boolean): Combination[] {
   const ids = run.request.agents.map((a) => a.model_id)
-  const key = (models: string[]) => [...models].sort().join('+')
-  const scored = findings.flatMap((f): [number, number][] =>
-    f.verdict === 'confirmed' && f.cvss !== null && f.reproduce_rate !== null ? [[f.cvss, f.reproduce_rate]] : [],
-  )
-  const current: Combination = {
-    combination_id: key(ids),
-    models: ids.map(modelName),
-    collaboration_mode: 'independent',
-    score: failedAll ? null : score(scored),
-    finding_count: failedAll ? null : scored.length,
-    is_current: true,
-  }
-  const others = OTHER_COMBINATIONS[envOf(run)]
-    .filter((c) => key(c.models) !== key(ids))
-    .map((c): Combination => ({
-      combination_id: key(c.models),
-      models: c.models.map(modelName),
+  return Array.from({ length: 2 ** ids.length - 1 }, (_, i) => i + 1).map((mask) => {
+    const slots = ids.flatMap((_, slot) => (mask & (1 << slot) ? [slot] : []))
+    const scored = FINDINGS[envOf(run)].flatMap((spec): [number, number][] => {
+      if (spec.verdict !== 'confirmed' || spec.cvss === null) return []
+      const results = visible.filter((v) => slots.includes(v.slot) && v.spec.finding === spec.id).flatMap((v) => v.spec.results).filter((r) => r !== null)
+      return results.some(Boolean) ? [[spec.cvss, round2(results.filter(Boolean).length / results.length)]] : []
+    })
+    return {
+      combination_id: slots.map((slot) => ids[slot]).join('+'),
+      models: slots.map((slot) => modelName(ids[slot])),
       collaboration_mode: 'independent',
-      score: c.contributions && score(c.contributions),
-      finding_count: c.contributions?.length ?? null,
-      is_current: false,
-    }))
-  return [current, ...others]
+      score: failedAll ? null : score(scored),
+      finding_count: failedAll ? null : scored.length,
+      is_current: slots.length === ids.length,
+    }
+  })
 }
 
 export function reportOf(run: Run, now: number): Report {
@@ -330,7 +324,7 @@ export function reportOf(run: Run, now: number): Report {
         }
       }),
     },
-    combinations: combinationsOf(run, findings, execution.status === 'failed'),
+    combinations: combinationsOf(run, visible, execution.status === 'failed'),
     findings,
     checklist,
     attempts,

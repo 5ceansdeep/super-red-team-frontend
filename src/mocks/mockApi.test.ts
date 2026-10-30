@@ -31,8 +31,8 @@ test('완주: 고유·공통·오탐이 나뉘고 조합 점수는 Σ(cvss × �
   assert.equal(current.score, Math.round(expected * 100) / 100)
   assert.equal(current.finding_count, 4)
   assert.equal(current.models.length, 3)
-  assert.equal(report.combinations.length, 4)
-  assert.ok(report.combinations.some((c) => c.score === null))
+  assert.equal(report.combinations.length, 7)
+  assert.equal(new Set(report.combinations.map((c) => c.score)).size, 7)
 })
 
 test('reproduced null과 실행 오류는 미재현으로 세지 않는다', () => {

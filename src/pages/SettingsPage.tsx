@@ -30,7 +30,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!models || !scenarios) return
-    const first = scenarios.find((s) => s.service === 'web') ?? scenarios[0]
+    const first = scenarios.find((s) => s.service === 'web' && s.target_url) ?? scenarios[0]
     setScenarioId(first?.id ?? '')
     setTargetUrl(first?.target_url ?? '')
     setAgents(models.slice(0, AGENT_COUNT).map((m) => ({ model_id: m.id, role: ROLES[0], prompt_version: PROMPT_VERSIONS[0] })))

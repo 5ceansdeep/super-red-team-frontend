@@ -23,7 +23,7 @@ export default function GuidePage() {
       <div className="heading">
         <div>
           <h1>이 사이트는 무엇인가요?</h1>
-          <p className="subtitle">여러 AI에게 같은 서비스의 보안 점검을 맡기고, 누가 더 잘 찾았는지 비교하는 사이트입니다.</p>
+          <p className="subtitle">여러 AI로 허가된 서비스를 점검해 재현된 취약점을 보고하고, 가장 효율적인 AI 구성을 찾는 사이트입니다.</p>
         </div>
       </div>
 
@@ -31,7 +31,7 @@ export default function GuidePage() {
         <h2>쉽게 말하면</h2>
         <p>
           AI 3개를 각각 보안 점검원으로 보내 같은 시험 환경을 점검하게 합니다.
-          서로의 답을 볼 수 없게 한 뒤 찾은 문제와 증거, 걸린 시간과 비용을 비교합니다.
+          서로의 답을 볼 수 없게 한 뒤, 증거로 확인된 취약점과 시간·비용을 함께 보고합니다.
         </p>
       </section>
 

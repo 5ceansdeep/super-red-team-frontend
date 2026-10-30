@@ -19,7 +19,9 @@ export default function RankingSection({ combinations }: { combinations: Combina
         <div className="recommend">
           <div>
             <div className="eyebrow">{winners.length > 1 ? `공동 1위 ${winners.length}개 조합` : '1위'} · 가장 심각한 취약점을 찾은 최고의 레드팀</div>
-            {winners.map((c) => <h3 key={c.combination_id}>{c.models.join(' + ')}</h3>)}
+            {winners.length > 3
+              ? <h3>{winners.length}개 조합이 같은 점수입니다</h3>
+              : winners.map((c) => <h3 key={c.combination_id}>{c.models.join(' + ')}</h3>)}
           </div>
           <div className="recscore"><strong>{score(top)}</strong><span>조합 점수</span></div>
         </div>

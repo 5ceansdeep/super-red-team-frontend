@@ -288,18 +288,3 @@ export const TOTALS: Record<EnvKind, { input: number; output: number }[]> = {
   vulnerable: [{ input: 84200, output: 12600 }, { input: 102500, output: 15400 }, { input: 61300, output: 9800 }],
   fixed: [{ input: 62100, output: 9300 }, { input: 71800, output: 10700 }, { input: 48200, output: 7100 }],
 }
-
-// 다른 실행에서 집계되었다고 가정한 비교용 조합. contributions는 [cvss, reproduce_rate] 쌍.
-// null이면 평가가 끝나지 않아 점수가 없는 조합.
-export const OTHER_COMBINATIONS: Record<EnvKind, { models: string[]; contributions: [number, number][] | null }[]> = {
-  vulnerable: [
-    { models: ['deepseek-flash', 'qwen3.8-flash'], contributions: [[7.1, 0.83], [7.1, 0.67], [4.3, 1]] },
-    { models: ['deepseek-flash', 'glm-5.3-flash'], contributions: [[7.1, 1], [7.1, 0.67], [4.3, 1]] },
-    { models: ['qwen3.8-flash', 'glm-5.3-flash'], contributions: null },
-  ],
-  fixed: [
-    { models: ['deepseek-flash', 'qwen3.8-flash'], contributions: [] },
-    { models: ['deepseek-flash', 'glm-5.3-flash'], contributions: [] },
-    { models: ['qwen3.8-flash', 'glm-5.3-flash'], contributions: null },
-  ],
-}

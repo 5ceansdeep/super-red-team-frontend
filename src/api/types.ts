@@ -52,6 +52,7 @@ export interface AgentRun {
   model_name: string
   role: string
   prompt_version: string
+  is_mock?: boolean
   status: RunStatus
   phase: string | null
   progress: number | null
@@ -114,6 +115,7 @@ export interface Finding {
   target: string
   cvss: number | null
   severity: Severity | null
+  cvss_vector?: string | null
   reproduce_rate: number | null
   verdict: Verdict
   impact: string

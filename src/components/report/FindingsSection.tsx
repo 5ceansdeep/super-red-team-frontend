@@ -33,6 +33,7 @@ export default function FindingsSection({ report }: { report: Report }) {
               </summary>
               <dl>
                 <dt>대상</dt><dd className="mono">{finding.target}</dd>
+                {finding.cvss_vector && <><dt>CVSS 벡터</dt><dd className="mono">{finding.cvss_vector}</dd></>}
                 <dt>어떤 문제인가요</dt><dd>{finding.impact}</dd>
                 <dt>해결 방법</dt><dd>{finding.remediation}</dd>
                 <dt>발견 모델</dt><dd>{finding.found_by.map(modelOf).join(', ')}</dd>

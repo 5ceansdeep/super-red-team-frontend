@@ -11,7 +11,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   catch { throw new ApiError(0, '백엔드에 연결할 수 없습니다. 연결 주소를 확인하세요.') }
   if (!response.ok) {
     const detail: unknown = response.status === 422 ? (await response.json().catch(() => ({}))).detail : null
-    const message = response.status === 401 ? '접근 토큰을 입력하거나 확인하세요.' : `API 오류 ${response.status}: ${path}`
+    const message = response.status === 401 ? '접근 토큰을 입력하거나 확인하세요.'
+      : response.status === 409 ? '이미 진행 중인 점검이 있습니다. 끝난 뒤 다시 시작하세요.' : `API 오류 ${response.status}: ${path}`
     throw new ApiError(response.status, typeof detail === 'string' ? detail : message)
   }
   return response.json()
@@ -24,7 +25,7 @@ interface BackendScenario {
   targets?: { id: string; name?: string; url?: string; urls?: string[]; environment?: string; allowed_paths: string[] }[]
 }
 interface BackendAgent {
-  id: string; model: string; model_name: string; role: string; prompt_version: string; status: RunStatus
+  id: string; model: string; model_name: string; role: string; prompt_version: string; status: RunStatus; is_mock?: boolean
   phase: string; progress: number; token_usage: number | null; estimated_cost: number | null
   duration: number | null; error: string | null
 }
@@ -54,6 +55,9 @@ function report(value: BackendReport): Report {
   return {
     ...value,
     settings: { ...value.settings, environment: environmentLabel(value.settings.environment) },
+    // 시뮬레이션 슬롯의 0원은 측정값이 아니다.
+    method_results: value.method_results.map((row) => (simulated(row.model_name) ? { ...row, cost_usd: null } : row)),
+    comparison: { ...value.comparison, agents: value.comparison.agents.map((row) => (simulated(row.model_name) ? { ...row, cost_usd: null } : row)) },
     // 백엔드의 found_by는 모델 이름이므로 에이전트 ID 목록을 쓴다.
     findings: value.findings.map((finding) => ({ ...finding, found_by: finding.agent_run_ids })),
     evidence: value.evidence.map((item) => ({
@@ -74,9 +78,9 @@ function execution(value: BackendExecution): Execution {
     created_at: value.created_at, finished_at: value.ended_at, error: value.error,
     agents: value.agents.map((agent) => ({
       agent_id: agent.id, model_id: agent.model, model_name: agent.model_name || agent.model,
-      role: agent.role, prompt_version: agent.prompt_version, status: agent.status,
+      role: agent.role, prompt_version: agent.prompt_version, is_mock: agent.is_mock, status: agent.status,
       phase: agent.phase, progress: agent.progress, tokens: agent.token_usage,
-      cost_usd: agent.estimated_cost, duration_ms: agent.duration === null ? null : agent.duration * 1000,
+      cost_usd: simulated(agent.model_name) ? null : agent.estimated_cost, duration_ms: agent.duration === null ? null : agent.duration * 1000,
       error: agent.error,
     })),
   }
@@ -86,7 +90,18 @@ const selectedScenarios = new Map<string, { scenario: string; environment: strin
 const logs = new Map<string, { cursor: number; entries: LogEntry[] }>()
 
 export const fetchHealth = () => request<Health>('/health')
-export const fetchModels = async (): Promise<Model[]> => (await request<BackendModel[]>('/models')).filter((m) => m.mode === connection().mode)
+// Qwen은 점검 프롬프트를 콘텐츠 검사로 거부해(data_inspection_failed) 실제 실행에서 시뮬레이션 슬롯을 쓴다.
+const LIVE_MODELS = ['deepseek-flash', 'glm-5.3-flash']
+const SIMULATED_QWEN = 'mock/qwen-simulated'
+const simulated = (name: string) => name.includes('시뮬레이션')
+
+export const fetchModels = async (): Promise<Model[]> => {
+  const models = await request<BackendModel[]>('/models')
+  if (connection().mode !== 'live') return models.filter((m) => m.mode === 'mock' && !simulated(m.name))
+  // 시뮬레이션 슬롯이 없는 서버에서는 기존 Qwen 모델을 그대로 보여 준다.
+  const order = [...LIVE_MODELS, models.some((m) => m.id === SIMULATED_QWEN) ? SIMULATED_QWEN : 'qwen3.8-flash']
+  return models.filter((m) => order.includes(m.id)).sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
+}
 export const fetchScenarios = async (): Promise<Scenario[]> => {
   const result: Scenario[] = []
   selectedScenarios.clear()

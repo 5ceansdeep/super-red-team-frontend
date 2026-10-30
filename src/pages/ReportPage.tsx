@@ -71,6 +71,10 @@ export default function ReportPage({ id }: { id: string }) {
         </p>
       )}
 
+      {!report.is_mock && report.settings.agents.some((a) => a.model_name.includes('시뮬레이션')) && (
+        <p className="notice">Qwen 슬롯은 시뮬레이션입니다. Qwen이 포함된 조합의 점수는 실측 결과가 아닙니다.</p>
+      )}
+
       <div className="tabs noprint" role="tablist" aria-label="보고서 내용">
         {TABS.map(([key, label]) => (
           <button key={key} role="tab" aria-selected={tab === key} onClick={() => setTab(key)}>{label}</button>
