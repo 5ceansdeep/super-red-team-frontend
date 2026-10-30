@@ -45,7 +45,7 @@ export default function MonitorPage({ id }: { id: string }) {
 
   if (!execution) {
     return error
-      ? <p className="notice error" role="alert">{error} <a className="link" href="#/">실행 기록으로</a></p>
+      ? <p className="notice error" role="alert">{error} <a className="link" href="#/">대시보드로</a></p>
       : <p className="notice">불러오는 중…</p>
   }
 

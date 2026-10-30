@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, isMock } from './api/index.ts'
+import Icon from './components/Icon.tsx'
 import { Tag } from './components/StatusBadge.tsx'
 import GuidePage from './pages/GuidePage.tsx'
 import MonitorPage from './pages/MonitorPage.tsx'
@@ -25,8 +26,10 @@ export default function App() {
   const id = match?.[1]
   const { data: health, error: healthError } = usePoll(api.fetchHealth, [], () => false, 10_000)
 
-  const nav = (href: string, label: string, active: boolean) => (
-    <a className={active ? 'nav active' : 'nav'} href={href} aria-current={active ? 'page' : undefined}>{label}</a>
+  const nav = (icon: Parameters<typeof Icon>[0]['name'], href: string, label: string, active: boolean) => (
+    <a className={active ? 'nav active' : 'nav'} href={href} aria-current={active ? 'page' : undefined}>
+      <Icon name={icon} />{label}
+    </a>
   )
 
   return (
@@ -34,14 +37,14 @@ export default function App() {
       <aside className="sidebar">
         <a className="brand" href="#/">
           <span className="brandmark">A</span>
-          <span>Adaptive<small>RED TEAM LAB</small></span>
+          <span>Adaptive<small>Red Team Lab</small></span>
         </a>
         <div className="navlabel">메뉴</div>
-        {nav('#/guide', '사용 안내', route === '/guide')}
-        {nav('#/new', '실행 설정', route === '/new')}
-        {nav('#/', '실행 기록', route === '/')}
-        {id && nav(`#/executions/${id}`, '실행 모니터', !match?.[2])}
-        {id && nav(`#/executions/${id}/report`, '결과 보고서', Boolean(match?.[2]))}
+        {nav('home', '#/', '대시보드', route === '/')}
+        {nav('play', '#/new', '실행 설정', route === '/new')}
+        {id && nav('pulse', `#/executions/${id}`, '실행 모니터', !match?.[2])}
+        {id && nav('report', `#/executions/${id}/report`, '결과 보고서', Boolean(match?.[2]))}
+        {nav('book', '#/guide', '사용 안내', route === '/guide')}
         <div className="sidebottom">
           <span className={healthError ? 'dot down' : 'dot'} />
           {isMock ? '시연 환경' : healthError ? '백엔드 연결 실패' : health ? '백엔드 연결됨' : '연결 확인 중'}
@@ -50,8 +53,8 @@ export default function App() {
       </aside>
       <div className="main">
         <header className="topbar">
-          <span className="crumb">Super Red Team</span>
           <Tag label={isMock ? '시연 데이터' : 'LIVE API'} tone={isMock ? '' : 'green'} />
+          <span className="team"><span className="avatar">SR</span>Super Red Team</span>
         </header>
         <main className="content">
           {route === '/guide' ? <GuidePage />
@@ -59,7 +62,7 @@ export default function App() {
             : id && match?.[2] ? <ReportPage key={id} id={id} />
             : id ? <MonitorPage key={id} id={id} />
             : route === '/' ? <RecentRunsPage />
-            : <p className="notice">페이지를 찾을 수 없습니다. <a className="link" href="#/">실행 기록으로</a></p>}
+            : <p className="notice">페이지를 찾을 수 없습니다. <a className="link" href="#/">대시보드로</a></p>}
         </main>
       </div>
     </div>
