@@ -6,6 +6,7 @@ export default function SettingsSection({ settings }: { settings: ReportSettings
       <div className="eyebrow">테스트 환경 · 범위 · 설정</div>
       <h3>{settings.scenario_name}</h3>
       <dl className="facts">
+        {settings.target_url && <><dt>대상 사이트</dt><dd className="mono">{settings.target_url}</dd></>}
         <dt>환경</dt><dd>{settings.environment} · {settings.version}</dd>
         <dt>테스트 계정</dt><dd>{settings.actors.join(' / ')}</dd>
         <dt>범위</dt><dd className="mono">{settings.allowed_paths.join(', ')}</dd>

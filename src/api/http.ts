@@ -10,8 +10,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try { response = await fetch(base.replace(/\/$/, '') + path, { ...init, headers }) }
   catch { throw new ApiError(0, '백엔드에 연결할 수 없습니다. 연결 주소를 확인하세요.') }
   if (!response.ok) {
+    const detail: unknown = response.status === 422 ? (await response.json().catch(() => ({}))).detail : null
     const message = response.status === 401 ? '접근 토큰을 입력하거나 확인하세요.' : `API 오류 ${response.status}: ${path}`
-    throw new ApiError(response.status, message)
+    throw new ApiError(response.status, typeof detail === 'string' ? detail : message)
   }
   return response.json()
 }
@@ -20,7 +21,7 @@ interface BackendModel extends Model { mode: 'mock' | 'live'; configured: boolea
 interface BackendScenario {
   id: string; name: string; service: string; description: string; accounts: string[]
   environments: string[]; environment_versions: Record<string, string>; allowed_paths: string[]
-  targets?: { id: string; allowed_paths: string[] }[]
+  targets?: { id: string; name?: string; url?: string; urls?: string[]; environment?: string; allowed_paths: string[] }[]
 }
 interface BackendAgent {
   id: string; model: string; model_name: string; role: string; prompt_version: string; status: RunStatus
@@ -91,12 +92,13 @@ export const fetchScenarios = async (): Promise<Scenario[]> => {
   selectedScenarios.clear()
   for (const scenario of await request<BackendScenario[]>('/scenarios')) {
     const targets = scenario.id === 'web-access-v1' ? scenario.targets ?? [] : [undefined]
-    for (const target of targets) for (const environment of scenario.environments) {
+    for (const target of targets) for (const environment of target?.environment ? [target.environment] : scenario.environments) {
       const id = `${scenario.id}:${environment}${target ? ':' + target.id : ''}`
       selectedScenarios.set(id, { scenario: scenario.id, environment, ...(target ? { target_id: target.id } : {}) })
-      result.push({ id, name: scenario.name + (target ? ' · ' + target.id : ''), service: scenario.service,
+      result.push({ id, name: scenario.name + (target ? ' · ' + (target.name ?? target.id) : ''), service: scenario.service,
         environment: environmentLabel(environment), version: scenario.environment_versions[environment], description: scenario.description,
-        actors: scenario.accounts, allowed_paths: target?.allowed_paths ?? scenario.allowed_paths })
+        actors: scenario.accounts, allowed_paths: target?.allowed_paths ?? scenario.allowed_paths,
+        ...(target ? { target_url: target.url, target_urls: target.urls ?? (target.url ? [target.url] : []) } : {}) })
     }
   }
   return result
@@ -124,9 +126,11 @@ export const startRun = async (body: StartRunRequest) => {
   if (!selectedScenarios.has(body.scenario_id)) await fetchScenarios()
   const scope = selectedScenarios.get(body.scenario_id)
   if (!scope) throw new ApiError(422, '등록된 시나리오를 선택하세요.')
+  const targetUrl = scope.scenario === 'web-access-v1' ? body.target_url?.trim() : undefined
+  const selectedScope = targetUrl ? { ...scope, target_id: undefined, target_url: targetUrl } : scope
   return request<StartRunResponse>('/executions', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...scope, mode: connection().mode, collaboration: body.collaboration_mode,
+    body: JSON.stringify({ ...selectedScope, mode: connection().mode, collaboration: body.collaboration_mode,
       agents: body.agents.map((a) => ({ model: a.model_id, role: a.role, prompt_version: a.prompt_version })),
       budget: { seconds: 180, tokens: 300000, max_output_tokens: 4000 } }),
   })

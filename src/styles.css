@@ -151,7 +151,7 @@ select { border: 1px solid var(--line); border-radius: 10px; background: var(--s
 .configrow { display: flex; justify-content: space-between; gap: 15px; padding: 10px 0; font-size: 15px; border-bottom: 1px solid var(--line); }
 .configrow:last-child { border: 0; }
 .configrow span { color: var(--muted); flex: none; }
-.configrow b { font-weight: 500; text-align: right; }
+.configrow b { font-weight: 500; text-align: right; min-width: 0; overflow-wrap: anywhere; }
 .safety { margin: 4px 20px 14px; background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; color: var(--accent-ink); font-size: 14px; }
 .safety ul { list-style: none; margin: 6px 0 0; padding: 0; overflow-wrap: anywhere; }
 .planned { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 0 20px 18px; font-size: 14px; color: var(--muted); }

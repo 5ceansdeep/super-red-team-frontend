@@ -25,6 +25,8 @@ export interface Scenario {
   description: string
   actors: string[]
   allowed_paths: string[]
+  target_url?: string
+  target_urls?: string[]
 }
 
 export interface AgentInput {
@@ -35,6 +37,7 @@ export interface AgentInput {
 
 export interface StartRunRequest {
   scenario_id: string
+  target_url?: string
   collaboration_mode: 'independent'
   agents: AgentInput[]
 }
@@ -181,6 +184,7 @@ export interface ReportSummary {
 
 export interface ReportSettings {
   scenario_name: string
+  target_url?: string | null
   environment: string
   version: string
   actors: string[]
