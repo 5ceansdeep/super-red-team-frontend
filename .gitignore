@@ -1,0 +1,25 @@
+# dependencies
+node_modules
+
+# build
+dist
+coverage
+
+# secrets: keep only the example file
+.env
+.env.*
+!.env.example
+*.local
+
+# deploy and tools
+.vercel
+.claude/
+
+# logs
+*.log
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.idea
+.vscode
