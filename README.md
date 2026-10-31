@@ -1,109 +1,96 @@
-# Adaptive Red Team Dashboard
+# Adaptive Red Team
 
-Super Red Team의 프론트엔드. 허가된 테스트 환경에서 AI 모델 3종을 독립 실행하고 결과를 비교한다.
-협업 방식은 Independent만 지원한다.
+**AI의 주장이 아니라 증거로 취약점을 찾습니다.**
 
-## 실행
+Adaptive Red Team은 여러 AI를 하나의 레드팀으로 운영하는 AI 보안 오케스트레이션 플랫폼입니다. AI들이 허가된 서비스를 독립적으로 공격 관점에서 점검하고, 실제 재현 증거로 취약점을 검증하며, 심각한 문제를 놓치지 않는 최적의 AI 레드팀 구성을 찾아냅니다.
+
+**[서비스 바로가기](https://super-red-team-frontend.vercel.app)**
+
+## 왜 Adaptive Red Team인가
+
+API에서 가장 위험한 문제 중 하나는 다른 사용자의 데이터가 보이는 접근 제어 취약점입니다. 이 문제는 겉보기에 정상 응답이라 기존 스캐너로 찾기 어렵고, 전문가 점검은 코드가 바뀔 때마다 반복하기 어렵습니다. AI를 쓰더라도 그 판단을 무엇으로 믿을지, 어떤 AI를 써야 할지가 남습니다.
+
+Adaptive Red Team은 이 세 가지 문제를 하나의 흐름으로 해결합니다.
+
+| 기존의 한계 | Adaptive Red Team |
+| --- | --- |
+| 패턴 기반 도구는 서비스 맥락을 이해하기 어려움 | AI가 맥락을 이해해 가설을 세우고 직접 검증 |
+| AI의 답변을 그대로 믿기 어려움 | 요청과 응답 증거로 독립 평가 엔진이 판정 |
+| 단일 AI는 사각지대가 있음 | 여러 AI의 독립 점검으로 사각지대 축소 |
+| 어떤 AI를 쓸지 근거가 없음 | 조합별 위험 점수, 시간, 비용으로 최적 구성 도출 |
+| 일회성 점검에 그침 | 반복 가능한 점검 파이프라인으로 지속적인 보안 확보 |
+
+## 핵심 기능
+
+- **독립 멀티 에이전트 레드팀:** DeepSeek, Qwen, GLM이 서로의 결과를 보지 않고 동시에 점검합니다.
+- **자율 공격 루프:** AI가 가설을 세우고, 요청을 실행하고, 결과를 보고 다음 공격을 결정합니다.
+- **증거 기반 판정:** 재현에 성공한 문제만 취약점으로 확정합니다.
+- **CVSS 기반 위험 평가:** 취약점의 심각도와 재현율을 점수로 정량화합니다.
+- **최고의 레드팀 랭킹:** 모든 AI 조합의 점수를 비교해 최적의 구성을 찾아냅니다.
+- **실시간 오케스트레이션:** AI별 진행률, 단계, 사용량, 로그를 실시간으로 관찰합니다.
+- **통합 보안 보고서:** 공격 경로, 증거, 영향, 해결 방법을 한 번에 제공합니다.
+- **안전 가드레일:** 등록된 대상과 허용 경로 안에서만 실행합니다.
+
+## 동작 방식
+
+```text
+대상과 AI 구성 선택
+        ↓
+허용 범위 확인과 환경 준비
+        ↓
+AI별 독립 탐색 → 가설 생성 → 검증 요청
+        ↓
+안전 실행기 → 증거 수집 → 평가 엔진 판정
+        ↓
+결과 기반 재계획 (반복)
+        ↓
+결과 통합 → 보안 보고서와 최고의 레드팀 선정
+```
+
+## 주요 화면
+
+| 화면 | 내용 |
+| --- | --- |
+| 대시보드 | 실행 현황과 조합 점수를 한눈에 확인 |
+| 실행 설정 | 대상과 AI별 역할 구성 |
+| 실행 모니터 | 에이전트 진행 상황과 로그를 실시간 관찰 |
+| 결과 보고서 | 결론, 레드팀 랭킹, 취약점과 증거, 모델 비교 |
+| 사용 안내 | 서비스와 보안 용어 안내 |
+
+## 시작하기
 
 ```bash
 npm install
 npm run dev
-npm test
-npm run build
 ```
 
-기본값은 Mock 모드라 백엔드 없이 전체 흐름이 동작한다. 실제 연결로 배포된 사이트에서도 주소에 `?demo=1`을 붙이면 시연 데이터로 동작한다.
-
-## Mock / 실제 전환
-
-분기는 `src/api/index.ts` 한 곳뿐이다. 환경 변수만 바꾸면 화면 코드는 그대로다.
-
-```bash
-VITE_USE_MOCK=false
-VITE_API_BASE_URL=https://api.example.com
-```
-
-값은 빌드 시점에 들어간다. Vercel에서는 환경 변수를 설정한 뒤 재배포한다.
-API 서버는 대시보드 도메인의 CORS를 허용해야 한다.
-
-## 구조
-
-```
-src/api/types.ts      데이터 계약
-src/api/http.ts       실제 API 호출 (fetchStatus, fetchReport, startRun, cancelRun 등)
-src/api/index.ts      Mock/실제 분기
-src/mocks/            Mock 데이터(fixtures.ts)와 가짜 백엔드(mockApi.ts)
-src/pages/            실행 설정, 최근 실행, 모니터, 보고서
-src/components/       로그, 상태 배지, report/ 보고서 섹션
-src/recentRuns.ts     이 브라우저에서 시작한 실행 ID 저장
-```
-
-## 연동 API
-
-| API | 용도 |
+| 명령 | 용도 |
 | --- | --- |
-| `GET /health` | 사이드바 연결 상태 (10초 주기) |
-| `GET /models` | 모델 목록 3종과 공급자, 100만 토큰당 단가 |
-| `GET /scenarios` | 시나리오 목록 |
-| `POST /executions` | 실행 시작, 202 + `{ execution_id }` |
-| `GET /executions/{id}` | 상태, 1.5초 주기 polling |
-| `GET /executions/{id}/logs` | 로그, 1.5초 주기 polling |
-| `POST /executions/{id}/cancel` | 취소 |
-| `GET /executions/{id}/report` | 최종 보고서 |
+| `npm run dev` | 개발 서버 실행 |
+| `npm test` | 테스트 실행 |
+| `npm run build` | 프로덕션 빌드 |
 
-경로는 확정이지만 응답 필드 상세는 `src/api/types.ts`의 프론트 제안안이며 백엔드와 합의가 필요하다.
+환경 변수는 `.env.example`을 참고합니다.
 
-### 백엔드에 요청할 필드
+## 기술 스택
 
-- Finding: `cvss`, `severity`, `reproduce_rate`. 값이 없으면 `null`.
-- 보고서: `combinations[]` (`models`, `collaboration_mode`, `score`, `finding_count`, `is_current`).
-- 시도: `reproduced`는 `true/false/null`, 실행 오류는 `error`에 사유.
-- 비용·토큰을 산출할 수 없으면 0이 아닌 `null`.
-- 실행·보고서: 결과 출처 `is_mock`. `false`면 `실측 결과`, 없으면 `출처 미확인`으로 표시한다.
-- 보고서 집계: `summary`, `method_results`, `comparison`. `comparison.agents`에 모델별 시간·토큰·비용을 포함한다.
+React 19 · TypeScript · Vite · Vercel
 
-## 표시 규칙
+## 프로젝트 구조
 
-- 숫자는 백엔드 값을 그대로 쓴다. 프론트는 조합을 점수순으로 정렬하고 순위만 매긴다.
-- 조합 점수가 0이거나 `null`이면 1위를 선정하지 않는다. 동점은 공동 1위로 표시한다.
-- `reproduced: null`은 `실행 오류` 또는 `판정 불가`로 표시하며 통과로 세지 않는다.
-- `null` 비용·토큰·CVSS는 `측정 불가`로 표시한다.
-- 시연 데이터 모드에서는 상단 `시연 데이터` 표시로 실제 측정이 아님을 알린다. 이 표시는 제거하지 않는다.
-- `status: completed`여도 실패한 에이전트가 있으면 `완료 · 일부 실패`로 표시한다.
+```text
+src/
+├─ api/          데이터 계약과 API 연동
+├─ pages/        대시보드, 실행 설정, 모니터, 보고서, 안내
+├─ components/   공통 UI, 로그, 차트, 보고서 섹션
+├─ format.ts     숫자와 시간 표시
+└─ usePoll.ts    실시간 갱신
+```
 
-## 사용 모델
+## 비전
 
-`Super_Red_Team_API_인계표.xlsx` 기준이며 실제 호출은 아직 검증하지 않았다.
+Adaptive Red Team은 코드가 바뀔 때마다 AI 레드팀이 자동으로 공격하고 검증하는 세상을 지향합니다. 어떤 팀이든 전담 보안 인력 없이도, 가장 효율적인 AI 구성으로 서비스를 지속적으로 지킬 수 있도록 만듭니다.
 
-| 모델 | Model ID | 입력 $/1M | 출력 $/1M |
-| --- | --- | --- | --- |
-| DeepSeek | `deepseek-flash` | 0.30 (혼잡·캐시 미스) | 1.20 |
-| Qwen | `qwen3.8-flash` | 0.15 | 0.47 |
-| GLM | `glm-5.3-flash` | 0.15 | 0.50 |
+---
 
-시연 데이터의 성능·발견 결과는 가상이며 실제 모델의 성능이 아니다. API 키는 프론트에 넣지 않는다.
-
-## 알려진 한계
-
-- 실제 백엔드와 연결해 본 적이 없다. `http.ts`는 미검증이다.
-- 계약에 실행 목록 API가 없어 최근 실행은 이 브라우저의 localStorage 기준이다.
-- 역할·프롬프트 버전 목록을 주는 API가 없어 프론트에 임시 상수로 둔다.
-- Mock 실행은 메모리에만 있어 새로고침하면 새로 만든 실행이 사라진다.
-- Mock의 모든 수치, CVSS, 증거는 가상이다.
-- 수정 환경은 별도 시나리오 항목으로 표현했다.
-- 조합별 비교 데이터가 어느 실행에서 집계되는지는 백엔드 정의가 필요하다.
-
-## Vercel 배포
-
-Vite로 자동 감지된다(빌드 `npm run build`, 출력 `dist`). 해시 라우팅이라 rewrite 설정이 필요 없다.
-## 대상 사이트 URL 입력
-
-백엔드 연동 모드의 실행 설정에서 `점검 대상 사이트 URL`을 입력합니다. 백엔드 API 주소와는 별도이며, 등록된 VM A·B·패치 사이트만 사용할 수 있습니다.
-
-- A: `https://homeserver.tail72d30b.ts.net:10000/lab/a/`
-- B: `https://homeserver.tail72d30b.ts.net:10000/lab/b/`
-- 패치: `https://homeserver.tail72d30b.ts.net:10000/lab/patched/`
-
-서버가 제공하는 대상 목록에서 선택해도 됩니다. 패치 주소를 입력하면 수정 환경으로 전환합니다. 요청은 `target_url`로 전달하며, 대상 ID와 실제 환경은 서버가 확정합니다. 미등록 주소를 입력하면 서버의 거부 이유를 표시합니다.
-
-백엔드에도 `target_url` 지원과 세 대상의 등록이 필요합니다. 운영 API 주소는 `VITE_API_BASE_URL=https://homeserver.tail72d30b.ts.net:10000`, 연결 모드는 `VITE_USE_MOCK=false`로 설정합니다. `VITE_EXECUTION_MODE=mock`는 모델 호출만 대체하며 실제 VM에 HTTP 요청을 보냅니다. 접근 토큰은 코드에 고정하지 않습니다.
+Built by **Super Red Team**
